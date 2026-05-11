@@ -502,7 +502,7 @@ async function fetchListings(target, minYear, maxYear) {
     rows: P.rows,
     start: 0,
   });
-  const url = `https://api.allorigins.win/raw?url=${encodeURIComponent(`https://api.marketcheck.com/v2/search/car/active?${params}`)}`;
+  const url = `https://api.marketcheck.com/v2/search/car/active?${params}`;
   try {
     const r = await fetch(url, { headers: { 'Accept': 'application/json' } });
     if(!r.ok) {
