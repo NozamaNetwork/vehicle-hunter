@@ -533,12 +533,17 @@ async function runSearch() {
   const minYear = CY - P.maxAge;
   const maxYear = CY;
 
-  // Fetch all targets in parallel
+  // Fetch targets sequentially with small delay to avoid rate limiting
   let allListings = [];
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
   try {
-    const fetches = TARGETS.map(t => fetchListings(t, minYear, maxYear));
-    const results = await Promise.all(fetches);
-    results.forEach(r => allListings = allListings.concat(r));
+    for(let i=0; i<TARGETS.length; i++) {
+      const t = TARGETS[i];
+      main.innerHTML = `<div class="loading"><div class="spin"></div><p>FETCHING ${t.make.toUpperCase()} ${t.model.toUpperCase()} (${i+1} of ${TARGETS.length})...</p></div>`;
+      const results = await fetchListings(t, minYear, maxYear);
+      allListings = allListings.concat(results);
+      if(i < TARGETS.length - 1) await sleep(300);
+    }
   } catch(e) {
     main.innerHTML = `<div class="error-box">Error fetching listings: ${e.message}<br>Check browser console (F12) for details.</div>`;
     btn.disabled=false; btn.textContent='RUN SEARCH';
