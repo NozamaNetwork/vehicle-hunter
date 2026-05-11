@@ -488,18 +488,18 @@ async function fetchListings(target, minYear, maxYear) {
     console.log(`Cache hit: ${target.make} ${target.model}`);
     return listingCache[cacheKey];
   }
-  const params = new URLSearchParams({
-    'vehicle.make': target.make,
-    'vehicle.model': target.model,
-    'vehicle.year': `${minYear}-${maxYear}`,
-    'retailListing.price': `1-${P.budget}`,
-    'retailListing.mileage': `1-${P.maxMiles}`,
-    zip: ZIP,
-    distance: P.radius,
-    limit: P.rows,
-    page: 1,
-  });
-  const url = `${PROXY}?${params}`;
+  const qs = [
+    `vehicle.make=${encodeURIComponent(target.make)}`,
+    `vehicle.model=${encodeURIComponent(target.model)}`,
+    `vehicle.year=${minYear}-${maxYear}`,
+    `retailListing.price=1-${P.budget}`,
+    `retailListing.mileage=1-${P.maxMiles}`,
+    `zip=${ZIP}`,
+    `distance=${P.radius}`,
+    `limit=${P.rows}`,
+    `page=1`,
+  ].join('&');
+  const url = `${PROXY}?${qs}`;
   try {
     const r = await fetch(url, { headers: { 'Accept': 'application/json' } });
     if(!r.ok) {
