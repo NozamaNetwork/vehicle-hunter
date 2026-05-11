@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vehicle Hunter</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap');
+:root {
+  --bg:#0f0f0f; --surface:#1a1a1a; --surface2:#222; --border:#2e2e2e;
+  --accent:#e8ff47; --accent2:#47b4ff; --danger:#ff4757; --success:#2ed573;
+  --warn:#ffa502; --text:#f0f0f0; --muted:#888; --dim:#555;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;line-height:1.5;}
+header{padding:18px 28px;border-bottom:1px solid var(--border);display:flex;align-items:baseline;gap:14px;}
+header h1{font-family:'Bebas Neue',sans-serif;font-size:34px;letter-spacing:2px;color:var(--accent);}
+header span{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;}
+.layout{display:grid;grid-template-columns:310px 1fr;height:calc(100vh - 65px);overflow:hidden;}
+.sidebar{border-right:1px solid var(--border);overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:12px;min-height:0;}
+.sidebar::-webkit-scrollbar{width:3px;} .sidebar::-webkit-scrollbar-thumb{background:var(--border);}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:4px;overflow:visible;flex-shrink:0;}
+.ph{padding:8px 13px;background:var(--surface2);border-bottom:1px solid var(--border);font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;display:flex;justify-content:space-between;align-items:center;border-radius:4px 4px 0 0;}
+.ph-l{color:var(--accent);} .ph-r{color:var(--dim);font-size:9px;}
+.pb{padding:10px 12px;display:flex;flex-direction:column;gap:8px;}
+.dq{display:flex;align-items:center;gap:9px;padding:6px 9px;border-radius:3px;border:1px solid transparent;cursor:pointer;user-select:none;transition:all .15s;}
+.dq:hover{background:var(--surface2);}
+.dq.on{background:rgba(255,71,87,.07);border-color:rgba(255,71,87,.25);}
+.dq.off{background:rgba(255,255,255,.02);border-color:var(--border);}
+.dq-box{width:15px;height:15px;border-radius:3px;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;}
+.dq.on .dq-box{background:var(--danger);border-color:var(--danger);}
+.dq-chk{display:none;} .dq.on .dq-chk{display:block;}
+.dq-lbl{font-size:12px;font-weight:500;} .dq.on .dq-lbl{color:var(--text);} .dq.off .dq-lbl{color:var(--muted);}
+.dq-mode{font-family:'DM Mono',monospace;font-size:9px;} .dq.on .dq-mode{color:var(--danger);} .dq.off .dq-mode{color:var(--dim);}
+.field{display:flex;flex-direction:column;gap:4px;}
+.field label{font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;}
+.frow{display:flex;align-items:center;gap:8px;}
+input[type=range]{-webkit-appearance:none;width:100%;height:3px;background:var(--border);border-radius:2px;outline:none;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;background:var(--accent);border-radius:50%;cursor:pointer;}
+.vd{font-family:'DM Mono',monospace;font-size:12px;color:var(--accent);min-width:68px;text-align:right;}
+.wrow{display:flex;align-items:center;gap:8px;}
+.wlbl{font-size:11px;color:var(--muted);flex:1;font-family:'DM Mono',monospace;}
+.wval{font-family:'DM Mono',monospace;font-size:11px;color:var(--accent2);min-width:22px;text-align:right;}
+.wrow input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;background:var(--accent2);border-radius:50%;cursor:pointer;}
+.wtotal{font-family:'DM Mono',monospace;font-size:11px;padding:5px 10px;border-radius:3px;text-align:center;margin-top:2px;}
+.wtotal.ok{background:rgba(46,213,115,.1);color:var(--success);border:1px solid rgba(46,213,115,.3);}
+.wtotal.bad{background:rgba(255,71,87,.1);color:var(--danger);border:1px solid rgba(255,71,87,.3);}
+.run{background:var(--accent);color:#000;border:none;padding:11px;font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:2px;border-radius:3px;cursor:pointer;width:100%;transition:opacity .15s;flex-shrink:0;}
+.run:hover{opacity:.85;} .run:disabled{opacity:.4;cursor:not-allowed;}
+.main{overflow-y:auto;padding:22px 26px;}
+.main::-webkit-scrollbar{width:3px;} .main::-webkit-scrollbar-thumb{background:var(--border);}
+.rh{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.rh h2{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:1px;color:var(--muted);}
+.stats{display:flex;gap:8px;}
+.pill{font-family:'DM Mono',monospace;font-size:10px;padding:3px 10px;border-radius:20px;}
+.pg{background:rgba(46,213,115,.1);color:var(--success);border:1px solid rgba(46,213,115,.2);}
+.pr{background:rgba(255,71,87,.1);color:var(--danger);border:1px solid rgba(255,71,87,.2);}
+.py{background:rgba(255,165,2,.1);color:var(--warn);border:1px solid rgba(255,165,2,.2);}
+.cards{display:flex;flex-direction:column;gap:10px;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:4px;overflow:hidden;transition:border-color .2s;}
+.card:hover{border-color:#3a3a3a;}
+.card.r1{border-color:rgba(232,255,71,.45);} .card.r2{border-color:rgba(232,255,71,.2);}
+.ctop{display:grid;grid-template-columns:42px 1fr auto;align-items:center;gap:12px;padding:12px 15px;cursor:pointer;}
+.rnk{font-family:'Bebas Neue',sans-serif;font-size:26px;color:var(--dim);text-align:center;line-height:1;}
+.card.r1 .rnk{color:var(--accent);} .card.r2 .rnk{color:rgba(232,255,71,.5);}
+.cinfo h3{font-size:14px;font-weight:600;margin-bottom:3px;line-height:1.4;}
+.cmeta{display:flex;gap:10px;flex-wrap:wrap;}
+.mi{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);}
+.mi span{color:var(--text);}
+.cright{display:flex;flex-direction:column;align-items:flex-end;gap:5px;}
+.sc{width:50px;height:50px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:19px;border:2px solid var(--border);}
+.sc-hi{border-color:var(--accent);color:var(--accent);}
+.sc-md{border-color:var(--accent2);color:var(--accent2);}
+.sc-lo{border-color:var(--muted);color:var(--muted);}
+.ptag{font-family:'DM Mono',monospace;font-size:13px;color:var(--success);}
+.badges{display:flex;gap:5px;flex-wrap:wrap;padding:0 15px 11px;}
+.b{font-family:'DM Mono',monospace;font-size:10px;padding:2px 7px;border-radius:2px;letter-spacing:.5px;text-transform:uppercase;}
+.bg{background:rgba(46,213,115,.12);color:var(--success);border:1px solid rgba(46,213,115,.2);}
+.bb{background:rgba(71,180,255,.12);color:var(--accent2);border:1px solid rgba(71,180,255,.2);}
+.by{background:rgba(232,255,71,.1);color:var(--accent);border:1px solid rgba(232,255,71,.2);}
+.bw{background:rgba(255,165,2,.1);color:var(--warn);border:1px solid rgba(255,165,2,.2);}
+.bgr{background:rgba(255,255,255,.05);color:var(--muted);border:1px solid var(--border);}
+.breakdown{display:none;border-top:1px solid var(--border);padding:12px 15px;background:var(--surface2);}
+.breakdown.open{display:block;}
+.bd-title{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;margin-bottom:9px;}
+.bd-rows{display:flex;flex-direction:column;gap:6px;}
+.bdr{display:grid;grid-template-columns:160px 1fr 48px;align-items:center;gap:9px;}
+.bdl{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);}
+.bdt{height:4px;background:var(--border);border-radius:2px;overflow:hidden;}
+.bdf{height:100%;border-radius:2px;transition:width .4s;}
+.bdf.full{background:var(--accent2);} .bdf.part{background:var(--warn);} .bdf.zero{background:transparent;}
+.bds{font-family:'DM Mono',monospace;font-size:11px;text-align:right;color:var(--text);}
+.bds.pen{color:var(--warn);}
+.vin-note{font-family:'DM Mono',monospace;font-size:10px;color:var(--dim);padding:0 15px 10px;margin-top:-4px;}
+.dealer-link{font-family:'DM Mono',monospace;font-size:10px;color:var(--accent2);text-decoration:none;padding:0 15px 10px;display:block;}
+.dealer-link:hover{text-decoration:underline;}
+.dqsec{margin-top:24px;}
+.dqsec-title{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;color:var(--danger);text-transform:uppercase;margin-bottom:9px;padding-bottom:6px;border-bottom:1px solid rgba(255,71,87,.2);}
+.dqcard{background:rgba(255,71,87,.04);border:1px solid rgba(255,71,87,.15);border-radius:4px;padding:8px 13px;margin-bottom:7px;}
+.dqtop{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;}
+.dqname{font-size:13px;font-weight:500;}
+.dqprice{font-family:'DM Mono',monospace;font-size:12px;color:var(--muted);}
+.dqreasons{display:flex;gap:5px;flex-wrap:wrap;}
+.dqtag{font-family:'DM Mono',monospace;font-size:10px;padding:2px 7px;background:rgba(255,71,87,.1);color:var(--danger);border:1px solid rgba(255,71,87,.2);border-radius:2px;}
+.htag{font-family:'DM Mono',monospace;font-size:9px;padding:2px 6px;background:rgba(46,213,115,.1);color:var(--success);border:1px solid rgba(46,213,115,.2);border-radius:2px;margin-left:5px;vertical-align:middle;}
+.empty{text-align:center;padding:70px 20px;color:var(--dim);font-family:'DM Mono',monospace;font-size:12px;letter-spacing:1px;}
+.empty .big{font-family:'Bebas Neue',sans-serif;font-size:72px;display:block;margin-bottom:8px;color:var(--border);letter-spacing:4px;}
+.loading{text-align:center;padding:50px 20px;}
+.loading .spin{display:inline-block;width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;margin-bottom:12px;}
+.loading p{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:1px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.error-box{background:rgba(255,71,87,.07);border:1px solid rgba(255,71,87,.3);border-radius:4px;padding:14px 18px;font-family:'DM Mono',monospace;font-size:12px;color:var(--danger);margin-bottom:16px;}
+</style>
+</head>
+<body>
+<header>
+  <h1>Vehicle Hunter</h1>
+  <span>Live Mode · MarketCheck + NHTSA</span>
+</header>
+<div class="layout">
+  <div class="sidebar">
+    <div class="panel">
+      <div class="ph"><span class="ph-l">Hard Disqualifiers</span><span class="ph-r">ON=exclude · OFF=penalize</span></div>
+      <div class="pb" id="dq-panel"></div>
+    </div>
+    <div class="panel">
+      <div class="ph"><span class="ph-l">Search Parameters</span></div>
+      <div class="pb">
+        <div class="field"><label>Max Budget</label><div class="frow"><input type="range" id="budget" min="20000" max="45000" step="500" value="30000"><span class="vd" id="v-budget">$30,000</span></div></div>
+        <div class="field"><label>Max Age (years)</label><div class="frow"><input type="range" id="maxAge" min="1" max="6" step="1" value="3"><span class="vd" id="v-age">3 yrs</span></div></div>
+        <div class="field"><label>Max Mileage</label><div class="frow"><input type="range" id="maxMiles" min="10000" max="80000" step="1000" value="36000"><span class="vd" id="v-miles">36,000</span></div></div>
+        <div class="field"><label>Min Tow Rating (lbs)</label><div class="frow"><input type="range" id="minTow" min="0" max="5000" step="250" value="2500"><span class="vd" id="v-tow">2,500</span></div></div>
+        <div class="field"><label>Search Radius (miles)</label><div class="frow"><input type="range" id="radius" min="25" max="300" step="25" value="100"><span class="vd" id="v-radius">100 mi</span></div></div>
+        <div class="field"><label>Results per Vehicle</label><div class="frow"><input type="range" id="rowsPerVehicle" min="5" max="50" step="5" value="10"><span class="vd" id="v-rows">10</span></div></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="ph"><span class="ph-l">Score Weights</span><span class="ph-r">must sum to 100</span></div>
+      <div class="pb">
+        <div class="wrow"><span class="wlbl">Price</span><input type="range" class="wi" data-key="price" min="0" max="40" value="24"><span class="wval" id="w-price">24</span></div>
+        <div class="wrow"><span class="wlbl">Mileage</span><input type="range" class="wi" data-key="mileage" min="0" max="40" value="20"><span class="wval" id="w-mileage">20</span></div>
+        <div class="wrow"><span class="wlbl">Age</span><input type="range" class="wi" data-key="age" min="0" max="30" value="14"><span class="wval" id="w-age">14</span></div>
+        <div class="wrow"><span class="wlbl">Roof Rack</span><input type="range" class="wi" data-key="roofRack" min="0" max="25" value="15"><span class="wval" id="w-roofRack">15</span></div>
+        <div class="wrow"><span class="wlbl">Safety + ACC</span><input type="range" class="wi" data-key="safety" min="0" max="20" value="10"><span class="wval" id="w-safety">10</span></div>
+        <div class="wrow"><span class="wlbl">Tow Rating</span><input type="range" class="wi" data-key="tow" min="0" max="20" value="7"><span class="wval" id="w-tow">7</span></div>
+        <div class="wrow"><span class="wlbl">Cold Weather</span><input type="range" class="wi" data-key="coldWeather" min="0" max="15" value="8"><span class="wval" id="w-coldWeather">8</span></div>
+        <div class="wrow"><span class="wlbl">Warranty</span><input type="range" class="wi" data-key="warranty" min="0" max="10" value="2"><span class="wval" id="w-warranty">2</span></div>
+        <div class="wtotal ok" id="wtotal">Total: 100 / 100</div>
+      </div>
+    </div>
+    <button class="run" id="runBtn" onclick="runSearch()">RUN SEARCH</button>
+  </div>
+  <div class="main" id="main">
+    <div class="empty"><span class="big">HUNT</span>Configure your filters and run the search</div>
+  </div>
+</div>
+<script>
+const MC_KEY = 'hWx1h6my9hH8erVnBCEvdNKI4ZUfM3Ku';
+const listingCache = {};  // session cache — cleared on tab close
+let apiCallsThisSession = 0;
+const ZIP = '53711';
+const CY = 2026;
+const fmt = n => (+n).toLocaleString();
+
+// Target vehicles: make/model pairs to search
+const TARGETS = [
+  {make:'Toyota',  model:'RAV4 Hybrid'},
+  {make:'Kia',     model:'Sportage'},
+  {make:'Hyundai', model:'Tucson'},
+  {make:'Honda',   model:'CR-V'},
+  {make:'Mazda',   model:'CX-5'},
+  {make:'Ford',    model:'Escape'},
+  {make:'Toyota',  model:'Venza'},
+  {make:'Subaru',  model:'Forester'},
+  {make:'Subaru',  model:'Outback'},
+];
+
+// Tow ratings by make/model (lbs) - manufacturer specs
+const TOW_RATINGS = {
+  'toyota rav4 hybrid': 3500,
+  'kia sportage':       2000,
+  'hyundai tucson':     2000,
+  'honda cr-v':         1500,
+  'mazda cx-5':         2000,
+  'ford escape':        2000,
+  'toyota venza':       2000,
+  'subaru forester':    1500,
+  'subaru outback':     3500,
+};
+
+function getTow(make, model) {
+  const key = (make+' '+model).toLowerCase();
+  return TOW_RATINGS[key] || 1500;
+}
+
+// Trim-level feature database based on manufacturer specs
+// Format: keyword match against trim string (lowercase)
+const TRIM_FEATURES = {
+  // ── TOYOTA RAV4 HYBRID ──────────────────────────────────────────────
+  'rav4': {
+    base: { heatedSeats:true, carplay:true, androidAuto:true, safety:true, acc:true, roofRack:false, heatedWheel:false, heatedRear:false, remoteStart:false, heatedMirrors:true, hybrid:true },
+    overrides: [
+      { match:'xle',     feats:{ roofRack:true, heatedWheel:true } },
+      { match:'xse',     feats:{ roofRack:true, heatedWheel:true } },
+      { match:'limited', feats:{ roofRack:true, heatedWheel:true, heatedRear:true, remoteStart:true } },
+      { match:'premium', feats:{ roofRack:true, heatedWheel:true, heatedRear:true } },
+    ]
+  },
+  // ── KIA SPORTAGE ────────────────────────────────────────────────────
+  'sportage': {
+    base: { heatedSeats:true, carplay:true, androidAuto:true, safety:true, acc:true, roofRack:false, heatedWheel:false, heatedRear:false, remoteStart:false, heatedMirrors:true, hybrid:false },
+    overrides: [
+      { match:'lx',        feats:{ heatedSeats:false } },
+      { match:'ex',        feats:{ heatedWheel:true, roofRack:false } },
+      { match:'sx',        feats:{ heatedWheel:true, heatedRear:true, roofRack:true, remoteStart:true } },
+      { match:'x-line',    feats:{ heatedWheel:true, roofRack:true } },
+      { match:'hybrid',    feats:{ hybrid:true } },
+      { match:'plug-in',   feats:{ hybrid:true } },
+    ]
+  },
+  // ── HYUNDAI TUCSON ───────────────────────────────────────────────────
+  'tucson': {
+    base: { heatedSeats:true, carplay:true, androidAuto:true, safety:true, acc:true, roofRack:false, heatedWheel:false, heatedRear:false, remoteStart:false, heatedMirrors:true, hybrid:false },
+    overrides: [
+      { match:'se',      feats:{ heatedSeats:false, acc:false } },
+      { match:'sel',     feats:{ heatedWheel:true } },
+      { match:'n line',  feats:{ heatedWheel:true, roofRack:false } },
+      { match:'limited', feats:{ heatedWheel:true, heatedRear:true, roofRack:true, remoteStart:true } },
+      { match:'hybrid',  feats:{ hybrid:true } },
+      { match:'plug-in', feats:{ hybrid:true } },
+    ]
+  },
+  // ── HONDA CR-V ──────────────────────────────────────────────────────
+  'cr-v': {
+    base: { heatedSeats:true, carplay:true, androidAuto:true, safety:true, acc:true, roofRack:false, heatedWheel:false, heatedRear:false, remoteStart:false, heatedMirrors:true, hybrid:false },
+    overrides: [
+      { match:'lx',      feats:{ heatedSeats:false, heatedWheel:false } },
+      { match:'ex',      feats:{ heatedWheel:true, roofRack:false } },
+      { match:'ex-l',    feats:{ heatedWheel:true, roofRack:false } },
+      { match:'sport',   feats:{ heatedWheel:true, roofRack:false } },
+      { match:'touring', feats:{ heatedWheel:true, heatedRear:true, roofRack:false, remoteStart:true } },
+      { match:'hybrid',  feats:{ hybrid:true } },
+    ]
+  },
+  // ── MAZDA CX-5 ──────────────────────────────────────────────────────
+  'cx-5': {
+    base: { heatedSeats:true, carplay:true, androidAuto:true, safety:true, acc:true, roofRack:false, heatedWheel:false, heatedRear:false, remoteStart:false, heatedMirrors:true, hybrid:false },
+    overrides: [
+      { match:'sport',   feats:{ heatedSeats:false, heatedWheel:false, acc:false } },
+      { match:'select',  feats:{ heatedWheel:false } },
+      { match:'preferred',feats:{ heatedWheel:true } },
+      { match:'carbon',  feats:{ heatedWheel:true, roofRack:true } },
+      { match:'touring', feats:{ heatedWheel:true } },
+      { match:'grand',   feats:{ heatedWheel:true, heatedRear:true, remoteStart:true } },
+      { match:'signature',feats:{ heatedWheel:true, heatedRear:true, remoteStart:true } },
+    ]
+  },
+  // ── TOYOTA VENZA HYBRID ─────────────────────────────────────────────
+  'venza': {
+    base: { heatedSeats:true, carplay:true, androidAuto:true, safety:true, acc:true, roofRack:false, heatedWheel:true, heatedRear:false, remoteStart:false, heatedMirrors:true, hybrid:true },
+    overrides: [
+      { match:'xle',     feats:{ roofRack:true } },
+      { match:'xse',     feats:{ roofRack:true } },
+      { match:'limited', feats:{ roofRack:true, heatedRear:true, remoteStart:true } },
+    ]
+  },
+  // ── SUBARU FORESTER ──────────────────────────────────────────────────
+  'forester': {
+    base: { heatedSeats:true, carplay:true, androidAuto:true, safety:true, acc:true, roofRack:true, heatedWheel:false, heatedRear:false, remoteStart:false, heatedMirrors:true, hybrid:false },
+    overrides: [
+      { match:'base',    feats:{ heatedSeats:false, heatedWheel:false } },
+      { match:'premium', feats:{ heatedWheel:false } },
+      { match:'sport',   feats:{ heatedWheel:true } },
+      { match:'limited', feats:{ heatedWheel:true, remoteStart:true } },
+      { match:'touring', feats:{ heatedWheel:true, heatedRear:true, remoteStart:true } },
+    ]
+  },
+  // ── SUBARU OUTBACK ───────────────────────────────────────────────────
+  'outback': {
+    base: { heatedSeats:true, carplay:true, androidAuto:true, safety:true, acc:true, roofRack:true, heatedWheel:false, heatedRear:false, remoteStart:false, heatedMirrors:true, hybrid:false },
+    overrides: [
+      { match:'base',    feats:{ heatedSeats:false } },
+      { match:'premium', feats:{ heatedWheel:false } },
+      { match:'sport',   feats:{ heatedWheel:true } },
+      { match:'limited', feats:{ heatedWheel:true, remoteStart:true } },
+      { match:'touring', feats:{ heatedWheel:true, heatedRear:true, remoteStart:true } },
+      { match:'wilderness',feats:{ heatedWheel:true, roofRack:true } },
+      { match:'onyx',    feats:{ heatedWheel:true } },
+    ]
+  },
+  // ── FORD ESCAPE ─────────────────────────────────────────────────────
+  'escape': {
+    base: { heatedSeats:true, carplay:true, androidAuto:true, safety:true, acc:true, roofRack:false, heatedWheel:false, heatedRear:false, remoteStart:false, heatedMirrors:false, hybrid:false },
+    overrides: [
+      { match:'s ',      feats:{ heatedSeats:false, acc:false } },
+      { match:'se ',     feats:{ heatedSeats:false } },
+      { match:'se sport',feats:{ heatedSeats:true, heatedWheel:true } },
+      { match:'sel',     feats:{ heatedWheel:true } },
+      { match:'titanium',feats:{ heatedWheel:true, heatedRear:true, remoteStart:true } },
+      { match:'st-line', feats:{ heatedWheel:false } },
+      { match:'hybrid',  feats:{ hybrid:true } },
+      { match:'phev',    feats:{ hybrid:true } },
+    ]
+  },
+};
+
+function featuresFromTrim(make, model, trim, nhtsaHybrid) {
+  const modelKey = Object.keys(TRIM_FEATURES).find(k => model.toLowerCase().includes(k));
+  const trimLow = (trim||'').toLowerCase();
+
+  let feats;
+  if(modelKey) {
+    const spec = TRIM_FEATURES[modelKey];
+    feats = {...spec.base};
+    // Apply overrides in order (later ones win)
+    spec.overrides.forEach(o => {
+      if(trimLow.includes(o.match)) Object.assign(feats, o.feats);
+    });
+  } else {
+    // Unknown model — assume modern features present
+    feats = { heatedSeats:true, carplay:true, androidAuto:true, safety:true, acc:true,
+               roofRack:false, heatedWheel:false, heatedRear:false, remoteStart:false, heatedMirrors:false, hybrid:false };
+  }
+
+  // NHTSA hybrid signal is reliable — use it as override
+  if(nhtsaHybrid) feats.hybrid = true;
+  // Model name hybrid signal
+  if(model.toLowerCase().includes('hybrid')) feats.hybrid = true;
+
+  return feats;
+}
+
+// NHTSA used only for hybrid signal now
+function parseNHTSA(results) {
+  const vars = {};
+  (results||[]).forEach(r => { if(r.Variable && r.Value) vars[r.Variable.toLowerCase()] = (r.Value||'').toLowerCase(); });
+  const has = (k, v) => (vars[k]||'').includes(v);
+  const any = (keys, v) => keys.some(k => has(k, v));
+  return {
+    hybrid: any(['electrification type','fuel type 1','electrification level'], 'hybrid') ||
+            has('fuel type - primary','electric') || any(['fuel type 1'], 'electric'),
+  };
+}
+
+// DISQUALIFIERS
+const DISQS = [
+  {key:'heatedSeats', label:'No heated seats',                on:true},
+  {key:'carplay',     label:'Missing CarPlay / Android Auto', on:true},
+  {key:'overBudget',  label:'Over budget',                    on:true},
+  {key:'tooOld',      label:'Exceeds max age',                on:true},
+  {key:'tooMiles',    label:'Exceeds max mileage',            on:true},
+  {key:'notHybrid',   label:'Not a hybrid',                   on:false},
+  {key:'towRating',   label:'Below min tow rating',           on:false},
+  {key:'noRack',      label:'No roof rack / rails',           on:false},
+  {key:'noSafety',    label:'No safety suite + ACC',          on:false},
+  {key:'noWarranty',  label:'No warranty remaining',          on:false},
+];
+let dqState = {};
+DISQS.forEach(d => dqState[d.key] = d.on);
+
+function renderDQ() {
+  document.getElementById('dq-panel').innerHTML = DISQS.map(d => {
+    const on = dqState[d.key];
+    return `<div class="dq ${on?'on':'off'}" onclick="toggleDQ('${d.key}')">
+      <div class="dq-box">
+        <svg class="dq-chk" width="10" height="8" viewBox="0 0 10 8" fill="none">
+          <path d="M1 4L3.5 6.5L9 1" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div><div class="dq-lbl">${d.label}</div><div class="dq-mode">${on?'▸ HARD EXCLUDE':'▸ SCORE PENALTY'}</div></div>
+    </div>`;
+  }).join('');
+}
+function toggleDQ(key) { dqState[key]=!dqState[key]; renderDQ(); }
+
+let P = {budget:30000,maxAge:3,maxMiles:36000,minTow:2500,radius:100,rows:10};
+let W = {price:24,mileage:20,age:14,roofRack:15,safety:10,tow:7,coldWeather:8,warranty:2};
+
+document.getElementById('budget').oninput  = e => { P.budget=+e.target.value;  document.getElementById('v-budget').textContent='$'+fmt(P.budget); };
+document.getElementById('maxAge').oninput  = e => { P.maxAge=+e.target.value;  document.getElementById('v-age').textContent=e.target.value+' yrs'; };
+document.getElementById('maxMiles').oninput= e => { P.maxMiles=+e.target.value;document.getElementById('v-miles').textContent=fmt(P.maxMiles); };
+document.getElementById('minTow').oninput  = e => { P.minTow=+e.target.value;  document.getElementById('v-tow').textContent=fmt(P.minTow); };
+document.getElementById('radius').oninput  = e => { P.radius=+e.target.value;  document.getElementById('v-radius').textContent=e.target.value+' mi'; };
+document.getElementById('rowsPerVehicle').oninput = e => { P.rows=+e.target.value; document.getElementById('v-rows').textContent=e.target.value; };
+
+document.querySelectorAll('input[data-key]').forEach(el => {
+  el.oninput = e => {
+    W[e.target.dataset.key]=+e.target.value;
+    document.getElementById('w-'+e.target.dataset.key).textContent=e.target.value;
+    const t=Object.values(W).reduce((a,b)=>a+b,0);
+    const el2=document.getElementById('wtotal');
+    el2.textContent='Total: '+t+' / 100';
+    el2.className='wtotal '+(t===100?'ok':'bad');
+  };
+});
+
+const DQ2DIM = {notHybrid:'price',towRating:'tow',noRack:'roofRack',noSafety:'safety',noWarranty:'warranty'};
+
+function evaluate(v) {
+  const age = CY - v.year;
+  const flags = [];
+  const flag = (cond,key,label) => { if(cond) flags.push({key,label,hard:dqState[key]}); };
+  flag(!v.feats.heatedSeats,                        'heatedSeats','No heated seats');
+  flag(!v.feats.carplay||!v.feats.androidAuto,      'carplay',    'Missing CarPlay/Android Auto');
+  flag(v.price>P.budget,                            'overBudget', 'Over budget ($'+fmt(v.price)+')');
+  flag(age>P.maxAge,                                'tooOld',     'Too old ('+age+' yrs)');
+  flag(v.miles>P.maxMiles,                          'tooMiles',   'Too many miles ('+fmt(v.miles)+')');
+  flag(!v.feats.hybrid,                             'notHybrid',  'Not a hybrid');
+  flag(P.minTow>0&&v.tow<P.minTow,                 'towRating',  'Tow '+fmt(v.tow)+' < '+fmt(P.minTow)+' lbs');
+  flag(!v.feats.roofRack,                           'noRack',     'No roof rack');
+  flag(!v.feats.safety||!v.feats.acc,               'noSafety',   'No safety suite + ACC');
+  flag(v.warr===0,                                  'noWarranty', 'No warranty remaining');
+
+  const hard=flags.filter(f=>f.hard);
+  if(hard.length) return {pass:false,reasons:hard.map(f=>f.label)};
+
+  const soft=flags.filter(f=>!f.hard);
+  const zeroed=new Set(soft.map(f=>DQ2DIM[f.key]).filter(Boolean));
+  const softKeys=new Set(soft.map(f=>f.key));
+
+  const b={};
+  const pf=P.budget*0.75;
+  let ps=Math.round(W.price*Math.max(0,Math.min(1,(P.budget-v.price)/(P.budget-pf))));
+  if(softKeys.has('notHybrid')) ps=Math.max(0,ps-5);
+  b.price=ps;
+  b.mileage=Math.round(W.mileage*Math.max(0,1-v.miles/P.maxMiles));
+  b.age=Math.round(W.age*Math.max(0,1-(CY-v.year)/P.maxAge));
+  b.roofRack=zeroed.has('roofRack')?0:(v.feats.roofRack?W.roofRack:0);
+  b.safety=zeroed.has('safety')?0:(v.feats.safety&&v.feats.acc?W.safety:0);
+  b.tow=zeroed.has('tow')?0:(P.minTow===0?W.tow:Math.round(W.tow*Math.min(1,v.tow/P.minTow)));
+  b.coldWeather=Math.round(W.coldWeather*((v.feats.heatedWheel?3:0)+(v.feats.heatedRear?2:0)+(v.feats.remoteStart?2:0)+(v.feats.heatedMirrors?1:0))/8);
+  b.warranty=zeroed.has('warranty')?0:Math.round(W.warranty*Math.min(1,v.warr/36));
+  const score=Object.values(b).reduce((a,x)=>a+x,0);
+  return {pass:true,score,b,zeroed};
+}
+
+function toggleBD(id) { document.getElementById('bd-'+id)?.classList.toggle('open'); }
+
+function makeBadges(v) {
+  const f=v.feats, out=[];
+  if(f.hybrid)        out.push(['bg','Hybrid']); else out.push(['bw','Gas Only']);
+  if(f.safety&&f.acc) out.push(['bb','Safety+ACC']); else out.push(['bgr','No Safety+ACC']);
+  if(f.roofRack)      out.push(['by','Roof Rack']);
+  if(f.heatedWheel)   out.push(['bb','Htd Wheel']);
+  if(f.heatedRear)    out.push(['bb','Htd Rear']);
+  if(f.remoteStart)   out.push(['bgr','Remote Start']);
+  if(v.warr>0)        out.push(['bg','Warr '+v.warr+'mo']); else out.push(['bgr','No Warr']);
+  out.push(['bgr','Tow '+fmt(v.tow)+'lb']);
+  return out.map(([c,l])=>`<span class="b ${c}">${l}</span>`).join('');
+}
+
+function makeBD(b, zeroed) {
+  const rows=[['Price vs Budget','price'],['Mileage','mileage'],['Age','age'],
+    ['Roof Rack','roofRack'],['Safety + ACC','safety'],['Tow Rating','tow'],
+    ['Cold Weather','coldWeather'],['Warranty','warranty']];
+  return rows.map(([lbl,key])=>{
+    const got=b[key],max=W[key],z=zeroed.has(key);
+    const pct=max>0?Math.round(got/max*100):0;
+    const fc=z?'zero':pct===100?'full':'part';
+    return `<div class="bdr">
+      <span class="bdl">${lbl}${z?' <span style="color:var(--warn);font-size:9px">(penalty)</span>':''}</span>
+      <div class="bdt"><div class="bdf ${fc}" style="width:${pct}%"></div></div>
+      <span class="bds ${z?'pen':''}">${got}/${max}</span>
+    </div>`;
+  }).join('');
+}
+
+// Estimate warranty months remaining
+function estWarranty(year) {
+  const ageMonths = (CY - year) * 12;
+  const bumptoB = 36; // 3yr/36k bumper to bumper typical
+  return Math.max(0, bumptoB - ageMonths);
+}
+
+async function fetchNHTSA(vin) {
+  try {
+    const r = await fetch(`https://vpic.nhtsa.dot.gov/api/vehicles/decodevinvalues/${vin}?format=json`);
+    const d = await r.json();
+    return parseNHTSA(d.Results||[]);
+  } catch(e) {
+    return { hybrid: false };
+  }
+}
+
+async function fetchListings(target, minYear, maxYear) {
+  const cacheKey = `${target.make}|${target.model}|${minYear}|${maxYear}|${P.budget}|${P.maxMiles}|${P.radius}|${P.rows}`;
+  if(listingCache[cacheKey]) {
+    console.log(`Cache hit: ${target.make} ${target.model}`);
+    return listingCache[cacheKey];
+  }
+  const params = new URLSearchParams({
+    api_key: MC_KEY,
+    car_type: 'used',
+    make: target.make,
+    model: target.model,
+    year_min: minYear,
+    year_max: maxYear,
+    price_max: P.budget,
+    miles_max: P.maxMiles,
+    zip: ZIP,
+    radius: P.radius,
+    rows: P.rows,
+    start: 0,
+  });
+  const url = `https://api.allorigins.win/raw?url=${encodeURIComponent(`https://api.marketcheck.com/v2/search/car/active?${params}`)}`;
+  try {
+    const r = await fetch(url, { headers: { 'Accept': 'application/json' } });
+    if(!r.ok) {
+      const txt = await r.text();
+      console.warn(`MC ${target.make} ${target.model}: HTTP ${r.status}`, txt);
+      return [];
+    }
+    const d = await r.json();
+    const listings = d.listings || [];
+    listingCache[cacheKey] = listings;  // store in cache
+    apiCallsThisSession++;
+    console.log(`API call #${apiCallsThisSession}: ${target.make} ${target.model} — ${listings.length} results`);
+    return listings;
+  } catch(e) {
+    console.warn(`MC fetch error ${target.make} ${target.model}:`, e.message);
+    return [];
+  }
+}
+
+async function runSearch() {
+  const btn = document.getElementById('runBtn');
+  btn.disabled = true;
+  btn.textContent = 'SEARCHING...';
+
+  const main = document.getElementById('main');
+  main.innerHTML = `<div class="loading"><div class="spin"></div><p>FETCHING LISTINGS FROM MARKETCHECK...</p></div>`;
+
+  const minYear = CY - P.maxAge;
+  const maxYear = CY;
+
+  // Fetch all targets in parallel
+  let allListings = [];
+  try {
+    const fetches = TARGETS.map(t => fetchListings(t, minYear, maxYear));
+    const results = await Promise.all(fetches);
+    results.forEach(r => allListings = allListings.concat(r));
+  } catch(e) {
+    main.innerHTML = `<div class="error-box">Error fetching listings: ${e.message}<br>Check browser console (F12) for details.</div>`;
+    btn.disabled=false; btn.textContent='RUN SEARCH';
+    return;
+  }
+
+  if(!allListings.length) {
+    main.innerHTML = `<div class="error-box">No listings returned from MarketCheck.<br>Try: expanding radius, raising budget, or check browser console (F12) for API errors.</div>`;
+    btn.disabled=false; btn.textContent='RUN SEARCH';
+    return;
+  }
+
+  // Deduplicate by VIN
+  const seen = new Set();
+  allListings = allListings.filter(l => {
+    if(!l.vin||seen.has(l.vin)) return false;
+    seen.add(l.vin); return true;
+  });
+
+  main.innerHTML = `<div class="loading"><div class="spin"></div><p>DECODING ${allListings.length} VINS VIA NHTSA...</p></div>`;
+
+  // VIN decode all listings
+  const vehicles = await Promise.all(allListings.map(async l => {
+    const feats = await fetchNHTSA(l.vin);
+    const year = parseInt(l.build?.year || l.year) || CY;
+    const make = l.build?.make || l.make || '';
+    const model = l.build?.model || l.model || '';
+    const trim = l.build?.trim || l.trim || '';
+    const fullFeats = featuresFromTrim(make, model, trim, feats.hybrid);
+    return {
+      id: l.id || l.vin,
+      vin: l.vin,
+      year, make, model,
+      trim,
+      price: parseInt(l.price) || 0,
+      miles: parseInt(l.miles) || 0,
+      tow: getTow(make, model),
+      feats: fullFeats,
+      warr: estWarranty(year),
+      dealer: l.dealer?.name || 'Unknown Dealer',
+      dealerCity: l.dealer?.city || '',
+      dealerState: l.dealer?.state || '',
+      listingUrl: l.vdp_url || '#',
+    };
+  }));
+
+  // Score and sort
+  const pass=[], fail=[];
+  vehicles.forEach(v => {
+    const r = evaluate(v);
+    if(r.pass) pass.push({v,score:r.score,b:r.b,zeroed:r.zeroed});
+    else fail.push({v,reasons:r.reasons});
+  });
+  pass.sort((a,b)=>b.score-a.score);
+
+  if(!pass.length && !fail.length) {
+    main.innerHTML='<div class="empty"><span class="big">0</span>No results. Try expanding radius or relaxing filters.</div>';
+    btn.disabled=false; btn.textContent='RUN SEARCH';
+    return;
+  }
+
+  const cachedCount = TARGETS.length * 6 - apiCallsThisSession; // rough
+  let h=`<div class="rh"><h2>Results</h2><div class="stats">
+    <span class="pill pg">${pass.length} qualified</span>
+    <span class="pill pr">${fail.length} disqualified</span>
+    <span class="pill py">${allListings.length} fetched · ${apiCallsThisSession} API calls</span>
+  </div></div><div class="cards">`;
+
+  pass.forEach((r,i) => {
+    const v=r.v, age=CY-v.year;
+    const rc=i===0?'r1':i===1?'r2':'';
+    const sc=r.score>=70?'sc-hi':r.score>=45?'sc-md':'sc-lo';
+    h+=`<div class="card ${rc}">
+      <div class="ctop" onclick="toggleBD('${v.id}')">
+        <div class="rnk">#${i+1}</div>
+        <div class="cinfo">
+          <h3>${v.year} ${v.make} ${v.model}${v.feats.hybrid?'<span class="htag">HYBRID</span>':''}
+            <br><span style="font-size:12px;font-weight:400;color:var(--muted)">${v.trim} · ${v.dealer}${v.dealerCity?', '+v.dealerCity:''}</span>
+          </h3>
+          <div class="cmeta">
+            <span class="mi"><span>${fmt(v.miles)}</span> mi</span>
+            <span class="mi"><span>${age}</span> yr old</span>
+            <span class="mi">Tow <span>${fmt(v.tow)}</span> lbs</span>
+            <span class="mi">${v.warr>0?'<span>'+v.warr+'mo</span> warr':'<span style="color:var(--dim)">No warr</span>'}</span>
+          </div>
+        </div>
+        <div class="cright">
+          <div class="sc ${sc}">${r.score}</div>
+          <div class="ptag">$${fmt(v.price)}</div>
+        </div>
+      </div>
+      <div class="badges">${makeBadges(v)}</div>
+      <div class="breakdown" id="bd-${v.id}">
+        <div class="bd-title">Score Breakdown · click card to collapse</div>
+        <div class="bd-rows">${makeBD(r.b,r.zeroed)}</div>
+      </div>
+      <div class="vin-note">VIN: ${v.vin}</div>
+      ${v.listingUrl!='#'?`<a class="dealer-link" href="${v.listingUrl}" target="_blank">▸ View full listing</a>`:''}
+    </div>`;
+  });
+
+  h+='</div>';
+
+  if(fail.length) {
+    h+=`<div class="dqsec"><div class="dqsec-title">Disqualified · ${fail.length} vehicles</div>`;
+    fail.forEach(({v,reasons}) => {
+      const f=v.feats;
+      const featDebug = `heatedSeats:${f.heatedSeats} | carplay:${f.carplay} | android:${f.androidAuto} | hybrid:${f.hybrid} | safety:${f.safety} | acc:${f.acc} | rack:${f.roofRack}`;
+      h+=`<div class="dqcard">
+        <div class="dqtop"><span class="dqname">${v.year} ${v.make} ${v.model} ${v.trim}</span><span class="dqprice">$${fmt(v.price)}</span></div>
+        <div class="dqreasons">${reasons.map(r=>`<span class="dqtag">${r}</span>`).join('')}</div>
+        <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--dim);margin-top:5px;">${featDebug}</div>
+      </div>`;
+    });
+    h+='</div>';
+  }
+
+  main.innerHTML=h;
+  btn.disabled=false;
+  btn.textContent='RUN SEARCH';
+}
+
+renderDQ();
+</script>
+</body>
+</html>
