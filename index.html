@@ -493,7 +493,7 @@ async function fetchListings(target, minYear, maxYear) {
     `vehicle.model=${encodeURIComponent(target.model)}`,
     `vehicle.year=${minYear}-${maxYear}`,
     `retailListing.price=1-${P.budget}`,
-    `retailListing.mileage=1-${P.maxMiles}`,
+    `retailListing.miles=1-${P.maxMiles}`,
     `zip=${ZIP}`,
     `distance=${P.radius}`,
     `limit=${P.rows}`,
@@ -509,18 +509,18 @@ async function fetchListings(target, minYear, maxYear) {
     }
     const d = await r.json();
     const listings = (d.data || []).map(l => ({
-      id:    l.id || l.vin,
+      id:    l.vin,
       vin:   l.vin,
       year:  l.vehicle?.year,
       make:  l.vehicle?.make,
       model: l.vehicle?.model,
       trim:  l.vehicle?.trim || '',
       price: l.retailListing?.price,
-      miles: l.retailListing?.mileage,
-      dealer: l.retailListing?.dealerName || 'Unknown Dealer',
+      miles: l.retailListing?.miles,
+      dealer: l.retailListing?.dealer || 'Unknown Dealer',
       city:  l.retailListing?.city || '',
       state: l.retailListing?.state || '',
-      url:   l.retailListing?.url || '#',
+      vdp:   l.retailListing?.vdp || '#',
     }));
     listingCache[cacheKey] = listings;
     apiCallsThisSession++;
@@ -596,7 +596,7 @@ async function runSearch() {
       dealer: l.dealer || 'Unknown Dealer',
       dealerCity: l.city || '',
       dealerState: l.state || '',
-      listingUrl: l.url || '#',
+      listingUrl: l.vdp || '#',
     };
   }));
 
