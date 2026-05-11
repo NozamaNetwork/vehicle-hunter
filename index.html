@@ -115,7 +115,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
 <body>
 <header>
   <h1>Vehicle Hunter</h1>
-  <span>Live Mode · MarketCheck + NHTSA</span>
+  <span>Live Mode · Auto.dev + NHTSA</span>
 </header>
 <div class="layout">
   <div class="sidebar">
@@ -489,17 +489,16 @@ async function fetchListings(target, minYear, maxYear) {
     return listingCache[cacheKey];
   }
   const params = new URLSearchParams({
-    car_type: 'used',
-    make: target.make,
-    model: target.model,
-    year_min: minYear,
-    year_max: maxYear,
-    price_max: P.budget,
-    miles_max: P.maxMiles,
+    'vehicle.make': target.make,
+    'vehicle.model': target.model,
+    'vehicle.year': `${minYear}-${maxYear}`,
+    'retailListing.price': `1-${P.budget}`,
+    'retailListing.mileage': `1-${P.maxMiles}`,
+    'retailListing.isUsed': 'true',
     zip: ZIP,
-    radius: P.radius,
-    rows: P.rows,
-    start: 0,
+    distance: P.radius,
+    limit: P.rows,
+    page: 1,
   });
   const url = `${PROXY}?${params}`;
   try {
@@ -510,7 +509,20 @@ async function fetchListings(target, minYear, maxYear) {
       return [];
     }
     const d = await r.json();
-    const listings = d.listings || [];
+    const listings = (d.data || []).map(l => ({
+      id:    l.id || l.vin,
+      vin:   l.vin,
+      year:  l.vehicle?.year,
+      make:  l.vehicle?.make,
+      model: l.vehicle?.model,
+      trim:  l.vehicle?.trim || '',
+      price: l.retailListing?.price,
+      miles: l.retailListing?.mileage,
+      dealer: l.retailListing?.dealerName || 'Unknown Dealer',
+      city:  l.retailListing?.city || '',
+      state: l.retailListing?.state || '',
+      url:   l.retailListing?.url || '#',
+    }));
     listingCache[cacheKey] = listings;
     apiCallsThisSession++;
     console.log(`API call #${apiCallsThisSession}: ${target.make} ${target.model} — ${listings.length} results`);
@@ -570,7 +582,7 @@ async function runSearch() {
     const year = parseInt(l.build?.year || l.year) || CY;
     const make = l.build?.make || l.make || '';
     const model = l.build?.model || l.model || '';
-    const trim = l.build?.trim || l.trim || '';
+    const trim = l.trim || '';
     const fullFeats = featuresFromTrim(make, model, trim, feats.hybrid);
     return {
       id: l.id || l.vin,
@@ -582,10 +594,10 @@ async function runSearch() {
       tow: getTow(make, model),
       feats: fullFeats,
       warr: estWarranty(year),
-      dealer: l.dealer?.name || 'Unknown Dealer',
-      dealerCity: l.dealer?.city || '',
-      dealerState: l.dealer?.state || '',
-      listingUrl: l.vdp_url || '#',
+      dealer: l.dealer || 'Unknown Dealer',
+      dealerCity: l.city || '',
+      dealerState: l.state || '',
+      listingUrl: l.url || '#',
     };
   }));
 
